@@ -1,0 +1,227 @@
+#Creating Association Rules
+Load packages
+pacman::p_load(arules, arulesViz)
+#Load Dataset and Data Exploration
+#Set working directory and load data
+setwd("C:/Users/Erin/Documents/Masters Program/R Directories")
+cosmetics <- read.csv("Cosmetics.csv")
+
+#Dataset exploration
+View(cosmetics)
+nrow(cosmetics)
+## [1] 1000
+
+#View individual item names
+
+t(t(names(cosmetics)))
+
+##       [,1]             
+##  [1,] "Trans."         
+##  [2,] "Bag"            
+##  [3,] "Blush"          
+##  [4,] "Nail.Polish"    
+##  [5,] "Brushes"        
+##  [6,] "Concealer"      
+##  [7,] "Eyebrow.Pencils"
+##  [8,] "Bronzer"        
+##  [9,] "Lip.liner"      
+## [10,] "Mascara"        
+## [11,] "Eye.shadow"     
+## [12,] "Foundation"     
+## [13,] "Lip.Gloss"      
+## [14,] "Lipstick"       
+## [15,] "Eyeliner"
+
+#Create bar plot showing total sales for each item
+
+is.matrix(cosmetics)
+## [1] FALSE
+
+cosmetic.data <- as.matrix(cosmetics[,-c(1)])
+barplot(cosmetic.data, main = "Individual Item Sales")
+
+#Data Preprocessing
+
+#Create a transactions database
+
+cos.trans <- as(cosmetic.data, "transactions")
+inspect(head(cos.trans), n = 10)
+##     items            
+## [1] {Blush,          
+##      Nail.Polish,    
+##      Brushes,        
+##      Concealer,      
+##      Bronzer,        
+##      Lip.liner,      
+##      Mascara,        
+##      Eyeliner}       
+## [2] {Nail.Polish,    
+##      Concealer,      
+##      Bronzer,        
+##      Lip.liner,      
+##      Foundation,     
+##      Lip.Gloss}      
+## [3] {Blush,          
+##      Concealer,      
+##      Eyebrow.Pencils,
+##      Bronzer,        
+##      Lip.liner,      
+##      Mascara,        
+##      Eye.shadow,     
+##      Foundation,     
+##      Lip.Gloss,      
+##      Lipstick}       
+## [4] {Nail.Polish,    
+##      Brushes,        
+##      Concealer,      
+##      Bronzer,        
+##      Foundation,     
+##      Eyeliner}       
+## [5] {Blush,          
+##      Concealer,      
+##      Bronzer,        
+##      Lip.liner,      
+##      Mascara,        
+##      Eye.shadow,     
+##      Lip.Gloss,      
+##      Lipstick}       
+## [6] {Concealer,      
+##      Eyeliner}
+
+#Explore transactions
+str(cos.trans)
+## Formal class 'transactions' [package "arules"] with 3 slots
+##   ..@ data       :Formal class 'ngCMatrix' [package "Matrix"] with 5 slots
+##   .. .. ..@ i       : int [1:4386] 1 2 3 4 6 7 8 13 2 4 ...
+##   .. .. ..@ p       : int [1:1001] 0 8 14 24 30 38 40 50 56 59 ...
+##   .. .. ..@ Dim     : int [1:2] 14 1000
+##   .. .. ..@ Dimnames:List of 2
+##   .. .. .. ..$ : NULL
+##   .. .. .. ..$ : NULL
+##   .. .. ..@ factors : list()
+##   ..@ itemInfo   :'data.frame':  14 obs. of  1 variable:
+##   .. ..$ labels: chr [1:14] "Bag" "Blush" "Nail.Polish" "Brushes" ...
+##   ..@ itemsetInfo:'data.frame':  0 obs. of  0 variables
+
+summary(cos.trans)
+## transactions as itemMatrix in sparse format with
+##  1000 rows (elements/itemsets/transactions) and
+##  14 columns (items) and a density of 0.3132857 
+## 
+## most frequent items:
+## Foundation  Lip.Gloss   Eyeliner  Concealer Eye.shadow    (Other) 
+##        536        490        457        442        381       2080 
+## 
+## element (itemset/transaction) length distribution:
+## sizes
+##   0   1   2   3   4   5   6   7   8   9  10  11  12  13 
+##  43  67 116 166 158 156 107  79  53  17  18  16   3   1 
+## 
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   0.000   3.000   4.000   4.386   6.000  13.000 
+## 
+## includes extended item information - examples:
+##        labels
+## 1         Bag
+## 2       Blush
+## 3 Nail.Polish
+
+#Create Association Rule Set - Confidence level 0.5
+
+##Create association rules with confidence = 0.5
+rules.highconf <- apriori(cos.trans, parameter = list(supp = 0.01, conf = 0.5, maxlen = 14, target = "rules"))
+## Apriori
+## 
+## Parameter specification:
+##  confidence minval smax arem  aval originalSupport maxtime support minlen
+##         0.5    0.1    1 none FALSE            TRUE       5    0.01      1
+##  maxlen target   ext
+##      14  rules FALSE
+## 
+## Algorithmic control:
+##  filter tree heap memopt load sort verbose
+##     0.1 TRUE TRUE  FALSE TRUE    2    TRUE
+## 
+## Absolute minimum support count: 10 
+## 
+## set item appearances ...[0 item(s)] done [0.00s].
+## set transactions ...[14 item(s), 1000 transaction(s)] done [0.00s].
+## sorting and recoding items ... [14 item(s)] done [0.00s].
+## creating transaction tree ... done [0.00s].
+## checking subsets of size 1 2 3 4 5 6 7 8 9 10 done [0.00s].
+## writing ... [12265 rule(s)] done [0.00s].
+## creating S4 object  ... done [0.01s].
+
+#Inspect the top 3 rules
+inspect(head(sort(rules.highconf, by = "lift"), n = 3))
+##     lhs              rhs       support confidence     lift count
+## [1] {Nail.Polish,                                               
+##      Bronzer,                                                   
+##      Lip.liner,                                                 
+##      Mascara,                                                   
+##      Eyeliner}    => {Brushes}   0.025  0.9615385 6.453278    25
+## [2] {Nail.Polish,                                               
+##      Concealer,                                                 
+##      Bronzer,                                                   
+##      Lip.liner,                                                 
+##      Mascara,                                                   
+##      Eyeliner}    => {Brushes}   0.025  0.9615385 6.453278    25
+## [3] {Nail.Polish,                                               
+##      Bronzer,                                                   
+##      Lip.liner,                                                 
+##      Eye.shadow,                                                
+##      Eyeliner}    => {Brushes}   0.023  0.9583333 6.431767    23
+
+#Create Associate Rule Set 2 - Confidence level 0.1
+##Create association rules with confidence = 0.1
+rules.lowconf <- apriori(cos.trans, parameter = list(supp = 0.01, conf = 0.1, maxlen = 14, target = "rules"))
+## Apriori
+## 
+## Parameter specification:
+##  confidence minval smax arem  aval originalSupport maxtime support minlen
+##         0.1    0.1    1 none FALSE            TRUE       5    0.01      1
+##  maxlen target   ext
+##      14  rules FALSE
+## 
+## Algorithmic control:
+##  filter tree heap memopt load sort verbose
+##     0.1 TRUE TRUE  FALSE TRUE    2    TRUE
+## 
+## Absolute minimum support count: 10 
+## 
+## set item appearances ...[0 item(s)] done [0.00s].
+## set transactions ...[14 item(s), 1000 transaction(s)] done [0.00s].
+## sorting and recoding items ... [14 item(s)] done [0.00s].
+## creating transaction tree ... done [0.00s].
+## checking subsets of size 1 2 3 4 5 6 7 8 9 10 done [0.00s].
+## writing ... [15343 rule(s)] done [0.00s].
+## creating S4 object  ... done [0.01s].
+
+#Inspect the top 5 rules
+inspect(head(sort(rules.lowconf, by = "lift"), n = 5))
+##     lhs              rhs               support confidence     lift count
+## [1] {Blush,                                                             
+##      Concealer,                                                         
+##      Mascara,                                                           
+##      Eye.shadow,                                                        
+##      Lipstick}    => {Eyebrow.Pencils}   0.013  0.3023256 7.198228    13
+## [2] {Blush,                                                             
+##      Concealer,                                                         
+##      Mascara,                                                           
+##      Lipstick}    => {Eyebrow.Pencils}   0.013  0.2888889 6.878307    13
+## [3] {Blush,                                                             
+##      Concealer,                                                         
+##      Eye.shadow,                                                        
+##      Lipstick}    => {Eyebrow.Pencils}   0.013  0.2826087 6.728778    13
+## [4] {Nail.Polish,                                                       
+##      Bronzer,                                                           
+##      Lip.liner,                                                         
+##      Mascara,                                                           
+##      Eyeliner}    => {Brushes}           0.025  0.9615385 6.453278    25
+## [5] {Nail.Polish,                                                       
+##      Concealer,                                                         
+##      Bronzer,                                                           
+##      Lip.liner,                                                         
+##      Mascara,                                                           
+##      Eyeliner}    => {Brushes}           0.025  0.9615385 6.453278    25
+
